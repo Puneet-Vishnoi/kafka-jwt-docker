@@ -1,0 +1,68 @@
+# version: "3.8"
+
+# services:
+#   zookeeper:
+#     image: wurstmeister/zookeeper:3.4.6
+#     ports:
+#       - "2181:2181"
+
+#   kafka:
+#     image: wurstmeister/kafka:2.13-2.8.0
+#     ports:
+#       - "9092:9092"
+#     environment:
+#       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+#       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+#       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+#       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+#       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#     depends_on:
+#       - zookeeper
+
+#   kafka-go-app:
+#     build:
+#       context: .
+#     depends_on:
+#       - kafka
+#     environment:
+#       KAFKA_BROKERS: ${KAFKA_BROKERS}
+#       KAFKA_TOPIC: ${KAFKA_TOPIC}
+#       KAFKA_DLQ_TOPIC: ${KAFKA_DLQ_TOPIC}
+#       KAFKA_GROUP_ID: ${KAFKA_GROUP_ID}
+#       KAFKA_MAX_RETRY: ${KAFKA_MAX_RETRY}
+#       KAFKA_RETRY_INTERVAL: ${KAFKA_RETRY_INTERVAL}
+
+
+
+version: "3.8"
+
+services:
+  zookeeper:
+    image: bitnami/zookeeper:3.8
+    ports:
+      - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+
+  kafka:
+    image: bitnami/kafka:3.6
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092      # <-- Changed here
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    depends_on:
+      - zookeeper
+
+  kafka-go-app:
+    build:
+      context: .
+    depends_on:
+      - kafka
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"                                             # <-- Make sure port 8080 exposed
