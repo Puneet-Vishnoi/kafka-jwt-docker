@@ -10,9 +10,7 @@ import (
 	"time"
 
 	"github.com/Puneet-Vishnoi/kafka-simple/config"
-	"github.com/Puneet-Vishnoi/kafka-simple/helpers"
 	"github.com/Puneet-Vishnoi/kafka-simple/kafka"
-	"github.com/Puneet-Vishnoi/kafka-simple/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,63 +21,63 @@ func main() {
 
 	// ---------------- ROUTES ----------------
 
-	r.POST("/signup", func(c *gin.Context) {
-		var signupData struct {
-			Email     string `json:"email"`
-			Password  string `json:"password"`
-			FirstName string `json:"first_name"`
-			LastName  string `json:"last_name"`
-			UserType  string `json:"user_type"`
-		}
+	// r.POST("/signup", func(c *gin.Context) {
+	// 	var signupData struct {
+	// 		Email     string `json:"email"`
+	// 		Password  string `json:"password"`
+	// 		FirstName string `json:"first_name"`
+	// 		LastName  string `json:"last_name"`
+	// 		UserType  string `json:"user_type"`
+	// 	}
 
-		if err := c.ShouldBindJSON(&signupData); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
-			return
-		}
+	// 	if err := c.ShouldBindJSON(&signupData); err != nil {
+	// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+	// 		return
+	// 	}
 
-		exists, _ := models.UserExists(signupData.Email)
-		if exists {
-			c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
-			return
-		}
+	// 	exists, _ := models.UserExists(signupData.Email)
+	// 	if exists {
+	// 		c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
+	// 		return
+	// 	}
 
-		hashedPassword, err := helpers.HashPassword(signupData.Password)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Password hashing failed"})
-			return
-		}
+	// 	hashedPassword, err := helpers.HashPassword(signupData.Password)
+	// 	if err != nil {
+	// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Password hashing failed"})
+	// 		return
+	// 	}
 
-		userID := helpers.GenerateUUID()
+	// 	userID := helpers.GenerateUUID()
 
-		err = models.CreateUser(models.User{
-			UserID:    userID,
-			Email:     signupData.Email,
-			Password:  hashedPassword,
-			FirstName: signupData.FirstName,
-			LastName:  signupData.LastName,
-			UserType:  signupData.UserType,
-		})
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
-			return
-		}
+	// 	err = models.CreateUser(models.User{
+	// 		UserID:    userID,
+	// 		Email:     signupData.Email,
+	// 		Password:  hashedPassword,
+	// 		FirstName: signupData.FirstName,
+	// 		LastName:  signupData.LastName,
+	// 		UserType:  signupData.UserType,
+	// 	})
+	// 	if err != nil {
+	// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+	// 		return
+	// 	}
 
-		accessToken, refreshToken, err := helpers.GenerateAllTokens(
-			signupData.Email, signupData.FirstName, signupData.LastName, signupData.UserType, userID,
-		)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Token generation failed"})
-			return
-		}
+	// 	accessToken, refreshToken, err := helpers.GenerateAllTokens(
+	// 		signupData.Email, signupData.FirstName, signupData.LastName, signupData.UserType, userID,
+	// 	)
+	// 	if err != nil {
+	// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token generation failed"})
+	// 		return
+	// 	}
 
-		c.JSON(http.StatusCreated, gin.H{
-			"message":       "Signup successful",
-			"access_token":  accessToken,
-			"refresh_token": refreshToken,
-			"user_id":       userID,
-			"email":         signupData.Email,
-		})
-	})
+	// 	c.JSON(http.StatusCreated, gin.H{
+	// 		"message":       "Signup successful",
+	// 		"access_token":  accessToken,
+	// 		"refresh_token": refreshToken,
+	// 		"user_id":       userID,
+	// 		"email":         signupData.Email,
+	// 	})
+	// })
 
 	// r.POST("/signin", func(c *gin.Context) {
 	// 	var loginData struct {
