@@ -1,8 +1,10 @@
 package helpers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -86,14 +88,52 @@ func ValidateToken(signedToken string) (*SignedDetails, error) {
 	}
 
 	claims, ok := token.Claims.(*SignedDetails)
-	if !ok || !token.Valid{
-		return  nil, errors.New("invalid token")
+	if !ok || !token.Valid {
+		return nil, errors.New("invalid token")
 	}
 
-	if claims.ExpiresAt.Time.Before(time.Now()){
+	if claims.ExpiresAt.Time.Before(time.Now()) {
 		return nil, errors.New("token expired")
 	}
 
 	return claims, errors.New("token expired")
 }
 
+// RefreshHandler validates refresh token and issues new tokens
+func RefreshHandler(w http.ResponseWriter, r *http.Request) {
+	refreshToken := r.Header.Get("Authorization") // e.g. Bearer <token>
+	if refreshToken == "" {
+		http.Error(w, "No refresh token provided", http.StatusUnauthorized)
+		return
+	}
+
+	if len(refreshToken) > 7 && refreshToken[:7] == "Bearer " {
+		refreshToken = refreshToken[7:]
+	}
+
+	claims, err := ValidateToken(refreshToken)
+	if err != nil {
+		http.Error(w, "Invalid refresh token: "+err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	// Generate new tokens using the user details
+	newAccessToken, newRefreshToken, err := GenerateAllTokens(
+		claims.Email,
+		claims.FirstName,
+		claims.LastName,
+		claims.UserType,
+		claims.Uid,
+	)
+	if err != nil {
+		http.Error(w, "Failed to generate new tokens", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"access_token":  newAccessToken,
+		"refresh_token": newRefreshToken,
+	})
+}
