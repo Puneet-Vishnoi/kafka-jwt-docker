@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/Puneet-Vishnoi/kafka-simple/config"
 	"github.com/segmentio/kafka-go"
 )
-
 
 // // EnsureTopicExists checks if a Kafka topic exists; if not, it creates it.
 // func EnsureTopicExists(brokers []string, topic string) error {
@@ -69,6 +69,7 @@ func SendToDLQ(ctx context.Context, writer *kafka.Writer, original kafka.Message
 			{Key: "original_offset", Value: []byte(fmt.Sprint(original.Offset))},
 			{Key: "retries", Value: []byte(fmt.Sprint(retries))},
 			{Key: "error", Value: []byte(processingErr.Error())},
+			{Key: "timestamp", Value: []byte(time.Now().UTC().Format(time.RFC3339))},
 		},
 	}
 	if err := writer.WriteMessages(ctx, dlqMsg); err != nil {
@@ -77,3 +78,22 @@ func SendToDLQ(ctx context.Context, writer *kafka.Writer, original kafka.Message
 		log.Printf("Sent to DLQ: offset=%d reason=%v", original.Offset, processingErr)
 	}
 }
+
+
+// // sendToDLQ serializes and sends a failed message to the DLQ
+// func sendToDLQ(ctx context.Context, writer *kafka.Writer, original kafka.Message, cause error) error {
+// 	dlqPayload := map[string]interface{}{
+// 		"original_key":   string(original.Key),
+// 		"original_value": string(original.Value),
+// 		"error":          cause.Error(),
+// 		"timestamp":      time.Now().UTC().Format(time.RFC3339),
+// 	}
+// 	bytes, err := json.Marshal(dlqPayload)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to marshal DLQ message: %w", err)
+// 	}
+// 	return writer.WriteMessages(ctx, kafka.Message{
+// 		Key:   original.Key,
+// 		Value: bytes,
+// 	})
+// }
